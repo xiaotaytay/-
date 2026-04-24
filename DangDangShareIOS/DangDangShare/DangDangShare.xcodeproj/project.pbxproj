@@ -23,7 +23,7 @@
 		A100010136 /* SettingsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010136 /* SettingsPanelView.swift */; };
 		A100010138 /* PiPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200010138 /* PiPManager.swift */; };
 		A100010139 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A200010139 /* Assets.xcassets */; };
-		A100010141 /* map.png in Resources */ = {isa = PBXBuildFile; fileRef = A200010141 /* map.png */; };
+		A100010141 /* map.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A200010141 /* map.jpg */; };
 		A100010142 /* 111.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A200010142 /* 111.jpg */; };
 /* End PBXBuildFile section */
 
@@ -46,7 +46,7 @@
 		A200010138 /* PiPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPManager.swift; sourceTree = "<group>"; };
 		A200010139 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A200010140 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A200010141 /* map.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = map.png; sourceTree = "<group>"; };
+		A200010141 /* map.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = map.jpg; sourceTree = "<group>"; };
 		A200010142 /* 111.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "111.jpg"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -88,7 +88,7 @@
 				A500010900 /* Overlay */,
 				A200010139 /* Assets.xcassets */,
 				A200010140 /* Info.plist */,
-				A200010141 /* map.png */,
+				A200010141 /* map.jpg */,
 				A200010142 /* 111.jpg */,
 			);
 			path = DangDangShare;
@@ -210,7 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A100010139 /* Assets.xcassets in Resources */,
-				A100010141 /* map.png in Resources */,
+				A100010141 /* map.jpg in Resources */,
 				A100010142 /* 111.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
