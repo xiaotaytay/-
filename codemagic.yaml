@@ -9,56 +9,46 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Build ipa for development
+      - name: Set up code signing
         script: |
           #!/bin/sh
           set -e
-          
-          echo "========================================="
-          echo "  Building DangDangShare iOS"
-          echo "========================================="
-          
           cd $CM_BUILD_DIR
-          
-          echo "[INFO] Project directory contents:"
-          ls -la
-          
-          echo "[INFO] Looking for Xcode project..."
-          find . -name "*.xcodeproj" -type d
-          
           PROJECT_FILE=$(find . -name "*.xcodeproj" -type d | head -1)
           if [ -z "$PROJECT_FILE" ]; then
             echo "[ERROR] No Xcode project found"
             exit 1
           fi
-          
           echo "[INFO] Using project: $PROJECT_FILE"
+          xcode-project use-profiles --project "$PROJECT_FILE"
+      - name: Build ipa
+        script: |
+          #!/bin/sh
+          set -e
+          cd $CM_BUILD_DIR
           
+          PROJECT_FILE=$(find . -name "*.xcodeproj" -type d | head -1)
           SCHEME_NAME=$(basename "$PROJECT_FILE" .xcodeproj)
-          echo "[INFO] Using scheme: $SCHEME_NAME"
           
-          echo "[INFO] Available schemes:"
-          xcodebuild -list -project "$PROJECT_FILE" || true
+          echo "[INFO] Building with project: $PROJECT_FILE, scheme: $SCHEME_NAME"
           
-          echo "[INFO] Creating build directory..."
           mkdir -p build/ios/ipa
           
-          echo "[INFO] Starting build..."
           xcodebuild -project "$PROJECT_FILE" \
-                    -scheme "$SCHEME_NAME" \
-                    -configuration Release \
-                    -destination "generic/platform=iOS" \
-                    -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
-                    archive
+            -scheme "$SCHEME_NAME" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
+            archive
           
-          echo "[INFO] Exporting IPA..."
-          # Create ExportOptions.plist using echo
+          echo "[INFO] Creating ExportOptions.plist"
           echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>development</string><key>signingStyle</key><string>automatic</string><key>compileBitcode</key><false/></dict></plist>' > ExportOptions.plist
           
+          echo "[INFO] Exporting IPA..."
           xcodebuild -exportArchive \
-                    -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
-                    -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-                    -exportOptionsPlist "$CM_BUILD_DIR/ExportOptions.plist"
+            -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist "$CM_BUILD_DIR/ExportOptions.plist"
           
           echo "[BUILD COMPLETE]"
           ls -la build/ios/ipa/
