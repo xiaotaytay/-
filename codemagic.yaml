@@ -6,21 +6,34 @@ workflows:
     environment:
       xcode: 16.4
     scripts:
-      - name: Build iOS app
+      - name: 生成导出配置
         script: |
-          xcodebuild build \
-            -scheme "DangDangShareIOS" \
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: 编译项目
+        script: |
+          xcodebuild archive \
+            -scheme "DangDangShareiOS" \
             -configuration Release \
-            -archivePath $CM_BUILD_DIR/MyApp.xcarchive \
-            archive
-      - name: Export IPA
+            -archivePath build/MyApp.xcarchive
+
+      - name: 导出IPA
         script: |
           xcodebuild -exportArchive \
-            -archivePath $CM_BUILD_DIR/MyApp.xcarchive \
-            -exportPath $CM_BUILD_DIR \
+            -archivePath build/MyApp.xcarchive \
+            -exportPath build \
             -exportOptionsPlist ExportOptions.plist
+
     artifacts:
       - build/*.ipa
-    publishing:
-      artifacts:
-        name: MyApp-IPA
