@@ -32,9 +32,24 @@ class PiPManager: NSObject {
     }
     
     private func loadMapImage() {
-        if let path = Bundle.main.path(forResource: "map", ofType: "png"),
+        if let path = Bundle.main.path(forResource: "map", ofType: "jpg"),
            let img = UIImage(contentsOfFile: path) {
             mapImage = img
+        } else if let url = Bundle.main.url(forResource: "map", withExtension: "jpg"),
+                  let data = try? Data(contentsOf: url),
+                  let img = UIImage(data: data) {
+            mapImage = img
+        } else {
+            let b = Bundle.main
+            for ext in ["jpg", "png"] {
+                for bundleURL in [b.resourceURL, b.bundleURL] {
+                    if let url = bundleURL?.appendingPathComponent("map.\(ext)") {
+                        if let data = try? Data(contentsOf: url), let img = UIImage(data: data) {
+                            mapImage = img; return
+                        }
+                    }
+                }
+            }
         }
     }
     
