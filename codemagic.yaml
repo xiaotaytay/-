@@ -1,39 +1,64 @@
 workflows:
-  ios-build:
-    name: iOS IPA Build
-    instance_type: mac_mini_m1
-    max_build_duration: 45
+  dangdang-share-ios:
+    name: DangDangShare iOS Build
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
     environment:
-      xcode: 16.4
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.dangdang.share
+      vars:
+        BUNDLE_ID: "com.dangdang.share"
+        XCODE_PROJECT: "DangDangShare.xcodeproj"
+        XCODE_SCHEME: "DangDangShare"
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: 生成导出配置
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
+      - name: Build ipa for distribution
         script: |
-          cat > ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-          </dict>
-          </plist>
-          EOF
-
-      - name: 编译项目
-        script: |
-          xcodebuild archive \
-            -scheme "DangDangShareiOS" \
-            -configuration Release \
-            -archivePath build/MyApp.xcarchive
-
-      - name: 导出IPA
-        script: |
-          xcodebuild -exportArchive \
-            -archivePath build/MyApp.xcarchive \
-            -exportPath build \
-            -exportOptionsPlist ExportOptions.plist
-
+          #!/bin/sh
+          set -e
+          
+          echo "========================================="
+          echo "  Building DangDangShare iOS"
+          echo "========================================="
+          
+          cd $CM_BUILD_DIR
+          
+          echo "[INFO] Project directory contents:"
+          ls -la
+          
+          if [ ! -f "$XCODE_PROJECT" ]; then
+            echo "[ERROR] Xcode project not found: $XCODE_PROJECT"
+            exit 1
+          fi
+          
+          echo "[INFO] Available schemes:"
+          xcodebuild -list -project "$XCODE_PROJECT" || true
+          
+          echo "[INFO] Starting build..."
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --options "-destination generic/platform=iOS" \
+            --ipa-include-bitcode=false \
+            --ipa-strip-frameworks=true \
+            --ipa-compress=true
+          
+          echo "[BUILD COMPLETE]"
     artifacts:
-      - build/*.ipa
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: true
