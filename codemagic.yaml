@@ -3,22 +3,13 @@ workflows:
     name: DangDangShare iOS Build
     max_build_duration: 120
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.dangdang.share
       vars:
         BUNDLE_ID: "com.dangdang.share"
-        XCODE_PROJECT: "DangDangShare.xcodeproj"
-        XCODE_SCHEME: "DangDangShare"
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: xcode-project use-profiles
-      - name: Build ipa for distribution
+      - name: Build ipa for development
         script: |
           #!/bin/sh
           set -e
@@ -32,29 +23,48 @@ workflows:
           echo "[INFO] Project directory contents:"
           ls -la
           
-          if [ ! -f "$XCODE_PROJECT" ]; then
-            echo "[ERROR] Xcode project not found: $XCODE_PROJECT"
+          echo "[INFO] Looking for Xcode project..."
+          find . -name "*.xcodeproj" -type d
+          
+          PROJECT_FILE=$(find . -name "*.xcodeproj" -type d | head -1)
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "[ERROR] No Xcode project found"
             exit 1
           fi
           
+          echo "[INFO] Using project: $PROJECT_FILE"
+          
+          SCHEME_NAME=$(basename "$PROJECT_FILE" .xcodeproj)
+          echo "[INFO] Using scheme: $SCHEME_NAME"
+          
           echo "[INFO] Available schemes:"
-          xcodebuild -list -project "$XCODE_PROJECT" || true
+          xcodebuild -list -project "$PROJECT_FILE" || true
+          
+          echo "[INFO] Creating build directory..."
+          mkdir -p build/ios/ipa
           
           echo "[INFO] Starting build..."
-          xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME" \
-            --options "-destination generic/platform=iOS" \
-            --ipa-include-bitcode=false \
-            --ipa-strip-frameworks=true \
-            --ipa-compress=true
+          xcodebuild -project "$PROJECT_FILE" \
+                    -scheme "$SCHEME_NAME" \
+                    -configuration Release \
+                    -destination "generic/platform=iOS" \
+                    -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
+                    archive
+          
+          echo "[INFO] Exporting IPA..."
+          # Create ExportOptions.plist using echo
+          echo '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>development</string><key>signingStyle</key><string>automatic</string><key>compileBitcode</key><false/></dict></plist>' > ExportOptions.plist
+          
+          xcodebuild -exportArchive \
+                    -archivePath "$CM_BUILD_DIR/build/ios/archive/DangDangShare.xcarchive" \
+                    -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+                    -exportOptionsPlist "$CM_BUILD_DIR/ExportOptions.plist"
           
           echo "[BUILD COMPLETE]"
+          ls -la build/ios/ipa/
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - build/ios/archive/*.xcarchive
     publishing:
       email:
         recipients:
